@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script src="./dist/main.js" defer></script>
+    <link rel="stylesheet" href="style.css" />
+    <title>Document</title>
+  </head>
+  <body>
+    <img src="./weather.png" alt="" />
+    <div class="formContainer">
+      <form action="#" id="weatherForm">
+        <label for="city">Search for city:</label>
+        <input type="text" name="city" id="city" />
+        <button id="submitBtn" type="submit">Send</button>
+      </form>
+      <p id="errorParagraph"></p>
+      <section id="weatherInfo">
+        <p id="cityName"></p>
+        <p id="currentTemperature"></p>
+        <p id="winddirection"></p>
+        <p id="windspeed"></p>
+      </section>
+    </div>
+  </body>
+</html>
