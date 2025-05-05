@@ -1,8 +1,4 @@
-import { Type } from "../node_modules/typescript/lib/typescript";
-
 const weatherForm = <HTMLFormElement>document.getElementById("weatherForm");
-
-const submitBtn = document.getElementById("submitBtn");
 
 const errorParagraph = <HTMLParagraphElement>(
   document.getElementById("errorParagraph")
@@ -20,7 +16,7 @@ const windDirection = <HTMLParagraphElement>(
 
 const windSpeed = <HTMLParagraphElement>document.getElementById("windspeed");
 
-async function fetchCity(searchForCityInput: string): Promise<Type> {
+async function fetchCity(searchForCityInput: string) {
   try {
     const response = await fetch(
       `https://geocoding-api.open-meteo.com/v1/search?name=${searchForCityInput}`,
@@ -28,25 +24,24 @@ async function fetchCity(searchForCityInput: string): Promise<Type> {
 
     if (response.status >= 400) {
       errorParagraph.innerText =
-        "Value of type 'String' required for key 'name'.";
+        "Network Error. Check the URL for misspelling!";
     }
 
     return await response.json();
   } catch (error) {
     console.log(error);
-
     throw error;
   }
 }
 
 async function fetchCityLatitudeAndLongitude(
-  latitude: number,
-  longitude: number,
+  latitudeCity: number,
+  longitudeCity: number,
 ) {
   try {
     const response =
-      await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=-
-${longitude}&current_weather=true`);
+      await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${latitudeCity}&longitude=-
+${longitudeCity}&current_weather=true`);
 
     if (response.status >= 400) {
       console.log(response.status);
@@ -58,15 +53,14 @@ ${longitude}&current_weather=true`);
   }
 }
 
-type PromiseFetchCityResult = {
-  results: undefined;
-  name: string;
-  latitude: string;
-  longitude: string;
+type CityLatitudeAndLongitudeType = {
+  results: [{ name: string; latitude: number; longitude: number }];
 };
 
+// const results: CityLatitudeAndLongitudeType[] = [];
+
 async function getFetchedCityLatitudeAndLongitude(
-  fetchCityResult: PromiseFetchCityResult,
+  fetchCityResult: CityLatitudeAndLongitudeType,
 ) {
   if (fetchCityResult.results !== undefined) {
     const { name, latitude, longitude } = fetchCityResult.results[0];
@@ -86,8 +80,20 @@ async function getFetchedCityLatitudeAndLongitude(
     windSpeed.innerText = "Wind speed: " + windspeed;
 
     errorParagraph.innerText = "";
+
+    errorParagraph.style.color = "red";
   } else {
     errorParagraph.innerText = "Ciy not found!";
+
+    errorParagraph.style.color = "red";
+
+    cityName.innerText = "";
+
+    currentTemperature.innerText = "";
+
+    windDirection.innerText = "";
+
+    windSpeed.innerText = "";
   }
 }
 
