@@ -1,107 +1,148 @@
 const weatherForm = <HTMLFormElement>document.getElementById("weatherForm");
 
-const errorParagraph = <HTMLParagraphElement>(
-  document.getElementById("errorParagraph")
-);
+interface CityNameResponse {
+  results: [
+    {
+      id: number;
+      name: string;
+      latitude: number;
+      longitude: number;
+      elevation: number;
+      feature_code: string;
+      country_code: string;
+      admin1_id: number;
+      timezone: string;
+      population: number;
+      postcodes: string[];
+      country_id: number;
+      country: string;
+      admin1: string;
+    },
+  ];
+  generationtime_ms: number;
+}
 
-const cityName = <HTMLParagraphElement>document.getElementById("cityName");
+interface CityLatitudeAndLongitudeResponse {
+  latitude: number;
+  longitude: number;
+  generationtime_ms: number;
+  utc_offset_seconds: number;
+  timezone: string;
+  timezone_abbreviation: string;
+  elevation: number;
+  current_weather: {
+    time: string;
+    interval: number;
+    temperature: number;
+    windspeed: number;
+    winddirection: number;
+    is_day: number;
+    weathercode: number;
+  };
+}
 
-const currentTemperature = <HTMLParagraphElement>(
-  document.getElementById("currentTemperature")
-);
+interface CityLatitudeAndLongitudeCurrentWeather {
+  current_weather_units: {
+    time: string;
+    interval: string;
+    temperature: string;
+    windspeed: string;
+    winddirection: string;
+    is_day: string;
+    weathercode: string;
+  };
+}
 
-const windDirection = <HTMLParagraphElement>(
-  document.getElementById("winddirection")
-);
-
-const windSpeed = <HTMLParagraphElement>document.getElementById("windspeed");
-
-async function fetchCity(searchForCityInput: string) {
+async function fetchForCityName(
+  searchForCity: string,
+): Promise<CityNameResponse> {
   try {
     const response = await fetch(
-      `https://geocoding-api.open-meteo.com/v1/search?name=${searchForCityInput}`,
+      `https://geocoding-api.open-meteo.com/v1/search?name=${searchForCity}`,
     );
 
     if (response.status >= 400) {
-      errorParagraph.innerText =
-        "Network Error. Check the URL for misspelling!";
+      throw new Error("Network error. Check if the URL is correct!");
     }
 
     return await response.json();
   } catch (error) {
-    console.log(error);
     throw error;
   }
 }
 
-async function fetchCityLatitudeAndLongitude(
-  latitudeCity: number,
-  longitudeCity: number,
-) {
+async function fetchForCityByLatitudeAndLongitude(
+  latitude: number,
+  longitude: number,
+): Promise<CityLatitudeAndLongitudeResponse> {
   try {
-    const response =
-      await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${latitudeCity}&longitude=-
-${longitudeCity}&current_weather=true`);
+    const response = await fetch(
+      `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current_weather=true`,
+    );
 
     if (response.status >= 400) {
-      console.log(response.status);
+      throw new Error("Network error. Check if the URL is correct!");
     }
 
     return await response.json();
   } catch (error) {
-    console.log(error);
+    throw error;
   }
 }
 
-type CityLatitudeAndLongitudeType = {
-  results: [{ name: string; latitude: number; longitude: number }];
-};
-
-// const results: CityLatitudeAndLongitudeType[] = [];
-
-async function getFetchedCityLatitudeAndLongitude(
-  fetchCityResult: CityLatitudeAndLongitudeType,
+function visualizeTheWeatherInfo(
+  fetchCityResult: CityNameResponse,
+  fetchCityLatitudeAndLongitude: CityLatitudeAndLongitudeResponse,
 ) {
-  if (fetchCityResult.results !== undefined) {
-    const { name, latitude, longitude } = fetchCityResult.results[0];
+  if (
+    fetchCityResult.results !== undefined &&
+    fetchForCityByLatitudeAndLongitude !== undefined
+  ) {
+    const cityName = <HTMLParagraphElement>document.getElementById("cityName");
 
-    cityName.innerText = "City: " + name;
+    const currentTemperature = <HTMLParagraphElement>(
+      document.getElementById("currentTemperature")
+    );
 
-    const fetchCityLatitudeAndLongitudeResult =
-      await fetchCityLatitudeAndLongitude(latitude, longitude);
+    const windDirection = <HTMLParagraphElement>(
+      document.getElementById("windDirection")
+    );
+
+    const windSpeed = <HTMLParagraphElement>(
+      document.getElementById("windSpeed")
+    );
+
+    const { name } = fetchCityResult.results[0];
 
     const { temperature, winddirection, windspeed } =
-      fetchCityLatitudeAndLongitudeResult.current_weather;
+      fetchCityLatitudeAndLongitude.current_weather;
+
+    cityName.innerText = "City: " + name;
 
     currentTemperature.innerText = "Current temperature: " + temperature + "C";
 
     windDirection.innerText = "Wind direction: " + winddirection;
 
     windSpeed.innerText = "Wind speed: " + windspeed;
-
-    errorParagraph.innerText = "";
-
-    errorParagraph.style.color = "red";
-  } else {
-    errorParagraph.innerText = "Ciy not found!";
-
-    errorParagraph.style.color = "red";
-
-    cityName.innerText = "";
-
-    currentTemperature.innerText = "";
-
-    windDirection.innerText = "";
-
-    windSpeed.innerText = "";
   }
 }
 
 weatherForm.addEventListener("submit", async (e) => {
-  const searchForCityInput = (<HTMLInputElement>document.getElementById("city"))
-    .value;
+  const searchForCity = (<HTMLInputElement>(
+    document.getElementById("searchForCity")
+  )).value;
   e.preventDefault();
-  const fetchCityResult = await fetchCity(searchForCityInput);
-  getFetchedCityLatitudeAndLongitude(fetchCityResult);
+  try {
+    const fetchCityResult = await fetchForCityName(searchForCity);
+
+    const { latitude, longitude } = fetchCityResult.results[0];
+
+    const fetchCityLatitudeAndLongitude =
+      await fetchForCityByLatitudeAndLongitude(latitude, longitude);
+
+    visualizeTheWeatherInfo(fetchCityResult, fetchCityLatitudeAndLongitude);
+  } catch (error) {
+    throw new Error("City not found!");
+  }
   weatherForm.reset();
 });
